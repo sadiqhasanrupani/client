@@ -5,7 +5,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import { toast } from "sonner";
 import { MutationKey, useMutation } from "@tanstack/react-query";
-import { queryClient } from "@/http";
 
 // image
 import LoginImg from "../../assets/auth/login-screen.png";
@@ -19,9 +18,8 @@ import Logo from "@/components/svg/logos/logo";
 import { loginHandler } from "@/http/post";
 import { LoginContext } from "@/types";
 import { Label } from "@/components/ui/label";
-import { getCookie, HttpError } from "@/lib/utils";
+import { HttpError } from "@/lib/utils";
 import Spinner from "@/components/loaders/spinner";
-import { verifyToken } from "@/http/get";
 
 type InitialValues = {
   email: string;
@@ -186,17 +184,4 @@ export default function Login() {
       </div>
     </div>
   );
-}
-
-export async function loader() {
-  const token = getCookie("authToken");
-
-  if (!token) {
-    return null;
-  }
-
-  return queryClient.fetchQuery<any, any, any>({
-    queryKey: ["verify-auth"],
-    queryFn: async () => verifyToken(`Bearer ${token}`),
-  });
 }

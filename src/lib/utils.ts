@@ -43,11 +43,28 @@ const getHeaders = (showToken: boolean = true) => {
 // Reusable POST function
 export const postRequest = async (
   url: string,
-  data: Record<string, any>,
+  data?: Record<string, any>,
   showToken: boolean = true,
 ) => {
   try {
     const response = await axios.post(
+      `${import.meta.env.VITE_API_URL}${url}`,
+      data,
+      { headers: getHeaders(showToken) },
+    );
+    return response.data;
+  } catch (error) {
+    handleAxiosError(error);
+  }
+};
+
+export const putRequest = async (
+  url: string,
+  data?: Record<string, any>,
+  showToken: boolean = true,
+) => {
+  try {
+    const response = await axios.put(
       `${import.meta.env.VITE_API_URL}${url}`,
       data,
       { headers: getHeaders(showToken) },
@@ -71,13 +88,12 @@ export const getRequest = async (url: string) => {
 };
 
 // Reusable DELETE function
-export const deleteRequest = async (url: string, data: Record<string, any>) => {
+export const deleteRequest = async (url: string) => {
   try {
     const response = await axios.delete(
       `${import.meta.env.VITE_API_URL}${url}`,
       {
         headers: getHeaders(),
-        data: data,
       },
     );
     return response.data;
@@ -97,3 +113,28 @@ function handleAxiosError(error: any) {
     throw new Error("Please try again.");
   }
 }
+
+export function classNames(
+  ...classes: (string | undefined | null | boolean)[]
+): string {
+  return classes.filter(Boolean).join(" ");
+}
+
+export const getInitials = (text: string) => {
+  const words = text.split(" ");
+
+  // Get the first word (or an empty string if no words are present)
+  const firstWord = words[0] || "";
+
+  // Get the second word, if available, or an empty string
+  const secondWord = words.length > 1 ? words[1] : "";
+
+  // Get the first letter of the first word and capitalize it
+  const firstInitial = firstWord.charAt(0).toUpperCase();
+
+  // Get the first letter of the second word, if available, and capitalize it
+  const secondInitial = secondWord.charAt(0).toUpperCase();
+
+  // Concatenate the initials together
+  return firstInitial + (secondInitial || firstWord.charAt(1).toUpperCase());
+};

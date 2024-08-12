@@ -1,5 +1,10 @@
 import { HttpError, postRequest } from "@/lib/utils";
-import { LoginContext, RegisterContext } from "@/types";
+import {
+  LoginContext,
+  RegisterContext,
+  StudentRegistrationContext,
+  TeacherRegistrationContext,
+} from "@/types";
 
 export async function registerHandler(registerContext: RegisterContext) {
   // return postRequest("/auth/register", { ...registerContext }, false);
@@ -43,4 +48,16 @@ export async function loginHandler(loginContext: LoginContext) {
   }
 
   return await response.json();
+}
+
+export async function teacherRegistrationHandler(
+  teacherRegistrationContext: TeacherRegistrationContext,
+) {
+  return postRequest("/teacher/create", teacherRegistrationContext);
+}
+
+export async function studentRegistrationHandler(
+  studentRegistrationContext: StudentRegistrationContext,
+) {
+  return postRequest("/student/create", studentRegistrationContext);
 }
