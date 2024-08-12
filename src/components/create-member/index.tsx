@@ -48,6 +48,7 @@ import {
 import { getAllUnassignedClassroomHandler } from "@/http/get";
 import { Skeleton } from "../ui/skeleton";
 import { queryClient } from "@/http";
+import { AppUseSelector } from "@/store";
 
 export type CreateMemberProps = {
   role: keyof typeof RoleEnum;
@@ -55,6 +56,7 @@ export type CreateMemberProps = {
 
 export default function CreateMember(props: CreateMemberProps) {
   const closeBtnRef = React.useRef<HTMLButtonElement>(null);
+  const userRole = AppUseSelector((state) => state.userDetail.role);
 
   const {
     data: allClassroomsData,
@@ -65,7 +67,7 @@ export default function CreateMember(props: CreateMemberProps) {
   } = useQuery<AllClassroomPayload, HttpError>({
     queryKey: ["get-all-classrooms"],
     queryFn: getAllUnassignedClassroomHandler,
-    enabled: props.role === "teacher",
+    enabled: userRole === "principle",
     staleTime: Infinity,
   });
 

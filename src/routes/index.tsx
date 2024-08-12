@@ -1,12 +1,14 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
+// error page
+import Error404 from "@/pages/error/error-404";
+
 // layout
 import RootLayout from "@/layouts/root-layout";
 
 // auth page
 import Login from "@/pages/auth/login";
 import Register from "@/pages/auth/register";
-import { loader as authLoader } from "@/loaders/verify-token";
 
 // manage users pages
 import ManageTeachers from "@/pages/manage-users/manage-teachers";
@@ -20,8 +22,9 @@ import ClassroomTimetable from "@/pages/timetables/classroom-timetable";
 import TeacherLists from "@/pages/members/teacher-lists";
 import StudentLists from "@/pages/members/student-lists";
 
-// error page
-import Error404 from "@/pages/error/error-404";
+// classrooms
+import Classrooms from "@/pages/classroom";
+import CreateClassroom from "@/pages/classroom/create-classroom";
 
 export function Routes() {
   const router = createBrowserRouter([
@@ -54,10 +57,17 @@ export function Routes() {
             { path: "students", element: <StudentLists /> },
           ],
         },
+        {
+          path: "classrooms",
+          children: [
+            { index: true, element: <Classrooms /> },
+            { path: "create", element: <CreateClassroom /> },
+          ],
+        },
       ],
     },
-    { path: "login", element: <Login />, loader: authLoader },
-    { path: "register", element: <Register /> },
+    { path: "login", element: <Login />, errorElement: <Error404 /> },
+    { path: "register", element: <Register />, errorElement: <Error404 /> },
   ]);
 
   return <RouterProvider router={router} />;

@@ -4,6 +4,23 @@ export enum RoleEnum {
   principle = "principle",
 }
 
+export type DayOfWeek =
+  | "monday"
+  | "tuesday"
+  | "wednesday"
+  | "thrusday"
+  | "friday"
+  | "saturday"
+  | "sunday";
+
+export type CreateClassroomContext = {
+  classroomName: string;
+  classroomDescription?: string;
+  startTime: string;
+  endTime: string;
+  daysOfWeek: DayOfWeek[];
+};
+
 // http body context types
 export type RegisterContext = {
   name: string;

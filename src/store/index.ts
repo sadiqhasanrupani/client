@@ -3,10 +3,12 @@ import { TypedUseSelectorHook, useSelector } from "react-redux";
 
 //^ reducers
 import updateDrawerReducer from "./slice/update-drawer.slice";
+import userDetailReducer from "./slice/user-detail.slice";
 
 const store = configureStore({
   reducer: {
     updateDrawer: updateDrawerReducer,
+    userDetail: userDetailReducer,
   },
 });
 

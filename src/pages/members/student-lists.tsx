@@ -1,13 +1,7 @@
 import CreateMember from "@/components/create-member";
 import Spinner from "@/components/loaders/spinner";
 import { Button } from "@/components/ui/button";
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerFooter,
-  DrawerTrigger,
-} from "@/components/ui/drawer";
+import { Drawer, DrawerClose, DrawerContent, DrawerFooter } from "@/components/ui/drawer";
 import UpdateMembers from "@/components/update-details/update-members";
 import { queryClient } from "@/http";
 import { getStudentHandler } from "@/http/get";
@@ -16,11 +10,7 @@ import { HttpError } from "@/lib/utils";
 import { AppUseSelector } from "@/store";
 import { updateDrawerAction } from "@/store/slice/update-drawer.slice";
 import StudentTable from "@/tables/student-list/table";
-import {
-  GetStudentPayload,
-  RoleEnum,
-  UpdateStudentRegistrationContext,
-} from "@/types";
+import { GetStudentPayload, RoleEnum, UpdateStudentRegistrationContext } from "@/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useFormik } from "formik";
 import React from "react";
@@ -28,9 +18,7 @@ import { useDispatch } from "react-redux";
 import { toast } from "sonner";
 
 export default function StudentLists() {
-  const selectedStudentId = AppUseSelector(
-    (state) => state.updateDrawer.userId,
-  );
+  const selectedStudentId = AppUseSelector((state) => state.updateDrawer.userId);
   const openDrawer = AppUseSelector((state) => state.updateDrawer.open);
   const dispatch = useDispatch();
 
@@ -147,34 +135,22 @@ export default function StudentLists() {
           {getUserIsLoading || getUserIsRefetching ? (
             "loading..."
           ) : (
-            <UpdateMembers
-              role="student"
-              userId={selectedStudentId}
-              formik={formik}
-            />
+            <UpdateMembers role="student" userId={selectedStudentId} formik={formik} />
           )}
           <div className="mx-auto w-full max-w-sm md:max-w-4xl overflow-y-auto">
             <DrawerFooter className="flex flex-col md:flex-row">
               <Button
                 type="button"
                 onClick={formik.submitForm}
-                disabled={
-                  !formik.isValid || updateStudentIsPending || !formik.dirty
-                }
+                disabled={!formik.isValid || updateStudentIsPending || !formik.dirty}
                 className="w-full"
               >
                 <div className="flex gap-2 items-center">
-                  <p>Update</p>{" "}
-                  <span>{updateStudentIsPending && <Spinner />}</span>
+                  <p>Update</p> <span>{updateStudentIsPending && <Spinner />}</span>
                 </div>
               </Button>
               <DrawerClose asChild>
-                <Button
-                  type="button"
-                  ref={closeBtnRef}
-                  className="w-full"
-                  variant="outline"
-                >
+                <Button type="button" ref={closeBtnRef} className="w-full" variant="outline">
                   Cancel
                 </Button>
               </DrawerClose>

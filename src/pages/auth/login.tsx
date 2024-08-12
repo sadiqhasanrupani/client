@@ -48,7 +48,7 @@ export default function Login() {
     email: yup.string().email().required("email is a required field"),
     password: yup
       .string()
-      .min(6)
+      .min(5)
       .required("Password should at-least 6 character or more than 6"),
   });
 

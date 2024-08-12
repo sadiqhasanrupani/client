@@ -11,7 +11,7 @@ const initialState: updateDrawerState = {
 };
 
 const updateDrawerSlice = createSlice({
-  name: "ui",
+  name: "update-drawer",
   initialState,
   reducers: {
     storeUserId(state, action) {

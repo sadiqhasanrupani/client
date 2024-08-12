@@ -1,22 +1,9 @@
 import { AllClassroomPayload, RoleEnum } from "@/types";
-import {
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-} from "../ui/drawer";
+import { DrawerDescription, DrawerHeader, DrawerTitle } from "../ui/drawer";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Skeleton } from "../ui/skeleton";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "../ui/select";
 import { classNames } from "@/lib/utils";
 
 export default function UpdateMembers(props: {
@@ -32,11 +19,7 @@ export default function UpdateMembers(props: {
     <div className="mx-auto w-full max-w-sm md:max-w-4xl overflow-y-auto">
       <DrawerHeader>
         <DrawerTitle>
-          {props.role === "teacher"
-            ? "Update Teacher"
-            : props.role === "student"
-              ? "Update Student"
-              : ""}
+          {props.role === "teacher" ? "Update Teacher" : props.role === "student" ? "Update Student" : ""}
         </DrawerTitle>
         <DrawerDescription>
           {props.role === "teacher"
@@ -53,10 +36,7 @@ export default function UpdateMembers(props: {
         >
           <div className="grid max-w-full grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6 md:col-span-2 w-full">
             <div className="sm:col-span-3">
-              <label
-                htmlFor="name"
-                className="block text-sm font-medium leading-6 text-gray-900"
-              >
+              <label htmlFor="name" className="block text-sm font-medium leading-6 text-gray-900">
                 Name
               </label>
               <div className="mt-2">
@@ -77,10 +57,7 @@ export default function UpdateMembers(props: {
             </div>
 
             <div className="sm:col-span-3">
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium leading-6 text-gray-900"
-              >
+              <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">
                 Email address
               </label>
               <div className="mt-2">
@@ -105,10 +82,7 @@ export default function UpdateMembers(props: {
                 {props.allClassroomsIsLoading ? (
                   <Skeleton className="w-100 h-[1.5rem]" />
                 ) : (
-                  <label
-                    htmlFor="classroom"
-                    className="block text-sm font-medium leading-6 text-gray-900"
-                  >
+                  <label htmlFor="classroom" className="block text-sm font-medium leading-6 text-gray-900">
                     Avaliable Classrooms
                   </label>
                 )}
@@ -117,9 +91,7 @@ export default function UpdateMembers(props: {
                     <Skeleton className="w-100 h-[2.25rem] mb-4" />
                   ) : (
                     <Select
-                      onOpenChange={() =>
-                        formik.setFieldTouched("classId", true)
-                      }
+                      onOpenChange={() => formik.setFieldTouched("classId", true)}
                       onValueChange={(value) => {
                         formik.setFieldValue("classId", parseInt(value));
                       }}
@@ -131,44 +103,27 @@ export default function UpdateMembers(props: {
                         <SelectGroup>
                           <SelectLabel>Classrooms</SelectLabel>
                           {allClassroomsData?.classrooms?.length === 0 ? (
-                            <p className="text-sm text-center p-4 text-red-600">
-                              {" "}
-                              All Classes are Assigned{" "}
-                            </p>
+                            <p className="text-sm text-center p-4 text-red-600"> All Classes are Assigned </p>
                           ) : (
-                            allClassroomsData?.classrooms?.map(
-                              (classroom, index) => (
-                                <SelectItem
-                                  key={index}
-                                  value={classroom.id.toString()}
-                                >
-                                  {classroom.name}
-                                </SelectItem>
-                              ),
-                            )
+                            allClassroomsData?.classrooms?.map((classroom, index) => (
+                              <SelectItem key={index} value={classroom.id.toString()}>
+                                {classroom.name}
+                              </SelectItem>
+                            ))
                           )}
                         </SelectGroup>
                       </SelectContent>
                     </Select>
                   )}
                   {formik.errors.classId && formik.touched.classId && (
-                    <Label className="text-red-500">
-                      {formik.errors.classId}
-                    </Label>
+                    <Label className="text-red-500">{formik.errors.classId}</Label>
                   )}
                 </div>
               </div>
             )}
 
-            <div
-              className={classNames(
-                props.role === "teacher" ? "sm:col-span-2" : "sm:col-span-3",
-              )}
-            >
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium leading-6 text-gray-900"
-              >
+            <div className={classNames(props.role === "teacher" ? "sm:col-span-2" : "sm:col-span-3")}>
+              <label htmlFor="password" className="block text-sm font-medium leading-6 text-gray-900">
                 Password
               </label>
               <div className="mt-2">
@@ -182,22 +137,13 @@ export default function UpdateMembers(props: {
                   className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
                 {formik.errors.password && formik.touched.password && (
-                  <Label className="text-red-500">
-                    {formik.errors.password}
-                  </Label>
+                  <Label className="text-red-500">{formik.errors.password}</Label>
                 )}
               </div>
             </div>
 
-            <div
-              className={classNames(
-                props.role === "teacher" ? "sm:col-span-2" : "sm:col-span-3",
-              )}
-            >
-              <label
-                htmlFor="confirmPass"
-                className="block text-sm font-medium leading-6 text-gray-900"
-              >
+            <div className={classNames(props.role === "teacher" ? "sm:col-span-2" : "sm:col-span-3")}>
+              <label htmlFor="confirmPass" className="block text-sm font-medium leading-6 text-gray-900">
                 Confirm Password
               </label>
               <div className="mt-2">
@@ -211,9 +157,7 @@ export default function UpdateMembers(props: {
                   className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
                 {formik.errors.confirmPass && formik.touched.confirmPass && (
-                  <Label className="text-red-500">
-                    {formik.errors.confirmPass}
-                  </Label>
+                  <Label className="text-red-500">{formik.errors.confirmPass}</Label>
                 )}
               </div>
             </div>

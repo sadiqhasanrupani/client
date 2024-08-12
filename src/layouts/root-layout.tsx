@@ -3,12 +3,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useMediaQuery } from "react-responsive";
 import Cookies from "js-cookie";
 
-import {
-  Dialog,
-  Transition,
-  DialogPanel,
-  TransitionChild,
-} from "@headlessui/react";
+import { Dialog, Transition, DialogPanel, TransitionChild } from "@headlessui/react";
 
 import {
   HomeIcon,
@@ -17,7 +12,6 @@ import {
   BadgePlus,
   UserRoundCog,
   CalendarCog,
-  NotebookPen,
   Dot,
   Menu,
   LogOutIcon,
@@ -38,17 +32,18 @@ import { Member, NavigationItem, RoleEnum, VerifyTokenPayload } from "@/types";
 import Spinner from "@/components/loaders/spinner";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useDispatch } from "react-redux";
+import { userDetailAction } from "@/store/slice/user-detail.slice";
 
 const sidebarWidth = "18rem";
 
-function classNames(
-  ...classes: (string | undefined | null | boolean)[]
-): string {
+function classNames(...classes: (string | undefined | null | boolean)[]): string {
   return classes.filter(Boolean).join(" ");
 }
 
 export default function RootLayout() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const [members, setMembers] = useState<Member[]>([]);
   const [navigation, setNavigations] = useState<NavigationItem[]>([]);
@@ -64,12 +59,13 @@ export default function RootLayout() {
   const {
     data: verifyTokenData,
     isLoading: verifyTokenIsLoading,
+    isRefetching: verifyTokenIsRefetching,
     isError: verifyTokenIsError,
     error: verifyTokenError,
   } = useQuery<VerifyTokenPayload, HttpError>({
     queryKey: ["verify-token", { navigate }],
     queryFn: () => verifyToken(),
-    retry: true,
+    retry: 2,
   });
 
   useEffect(() => {
@@ -84,18 +80,80 @@ export default function RootLayout() {
     let memberList: Member[] = [];
     let navigationLists: NavigationItem[] = [];
 
-    if (verifyTokenData && verifyTokenData.role) {
-      const role: RoleEnum = verifyTokenData.role;
+    if (!verifyTokenIsLoading || !verifyTokenIsRefetching) {
+      if (verifyTokenData && verifyTokenData.role) {
+        const role: RoleEnum = verifyTokenData.role;
 
-      if (role === "principle") {
+        dispatch(userDetailAction.set({ role: verifyTokenData.role }));
+
+        if (role === "principle") {
+          memberList = [
+            {
+              id: 2,
+              name: "Teachers",
+              to: "/members/teachers",
+              initial: "T",
+              current: false,
+            },
+            {
+              id: 3,
+              name: "Students",
+              to: "/members/students",
+              initial: "S",
+              current: false,
+            },
+          ];
+          navigationLists = [
+            { name: "Dashboard", to: "/", icon: HomeIcon },
+            {
+              name: "Manage Users",
+              to: "/manage-users",
+              icon: UserRoundCog,
+              children: [
+                {
+                  name: "Teachers",
+                  to: "/manage-users/teachers",
+                  icon: Dot,
+                },
+                {
+                  name: "Students",
+                  to: "/manage-users/students",
+                  icon: Dot,
+                },
+              ],
+            },
+            { name: "Timetable", to: "/timetables", icon: CalendarCog },
+            { name: "Manage Classrooms", to: "/classrooms", icon: BadgePlus },
+            // {
+            //   name: "Assign Classroom",
+            //   to: "/assign-classrooms",
+            //   icon: NotebookPen,
+            // },
+          ];
+        } else if (role === "teacher") {
+          // Handle other roles if needed
+          memberList = [
+            {
+              id: 3,
+              name: "Students",
+              to: "/members/students",
+              initial: "S",
+              current: false,
+            },
+          ];
+          navigationLists = [
+            { name: "Dashboard", to: "/", icon: HomeIcon },
+            { name: "Timetable", to: "/timetables", icon: CalendarCog },
+          ];
+        }
+      } else {
+        // Default case if verifyTokenData is undefined or role is undefined
+        navigationLists = [
+          { name: "Dashboard", to: "/", icon: HomeIcon },
+          { name: "Timetable", to: "/timetables", icon: CalendarCog },
+        ];
+
         memberList = [
-          {
-            id: 2,
-            name: "Teachers",
-            to: "/members/teachers",
-            initial: "T",
-            current: false,
-          },
           {
             id: 3,
             name: "Students",
@@ -103,71 +161,15 @@ export default function RootLayout() {
             initial: "S",
             current: false,
           },
-        ];
-        navigationLists = [
-          { name: "Dashboard", to: "/", icon: HomeIcon },
-          {
-            name: "Manage Users",
-            to: "/manage-users",
-            icon: UserRoundCog,
-            children: [
-              {
-                name: "Teachers",
-                to: "/manage-users/teachers",
-                icon: Dot,
-              },
-              {
-                name: "Students",
-                to: "/manage-users/students",
-                icon: Dot,
-              },
-            ],
-          },
-          { name: "Timetable", to: "/timetables", icon: CalendarCog },
-          { name: "Classroom", to: "/classrooms", icon: BadgePlus },
-          {
-            name: "Assign Classroom",
-            to: "/assign-classrooms",
-            icon: NotebookPen,
-          },
-        ];
-      } else if (role === "teacher") {
-        // Handle other roles if needed
-        memberList = [
-          {
-            id: 3,
-            name: "Students",
-            to: "/members/students",
-            initial: "S",
-            current: false,
-          },
-        ];
-        navigationLists = [
-          { name: "Dashboard", to: "/", icon: HomeIcon },
-          { name: "Timetable", to: "/timetables", icon: CalendarCog },
         ];
       }
-    } else {
-      // Default case if verifyTokenData is undefined or role is undefined
-      navigationLists = [
-        { name: "Dashboard", to: "/", icon: HomeIcon },
-        { name: "Timetable", to: "/timetables", icon: CalendarCog },
-      ];
-
-      memberList = [
-        {
-          id: 3,
-          name: "Students",
-          to: "/members/students",
-          initial: "S",
-          current: false,
-        },
-      ];
     }
 
     setMembers(memberList);
     setNavigations(navigationLists);
-  }, [verifyTokenData, verifyTokenIsError, verifyTokenError, navigate]);
+
+    // eslint-disable-next-line
+  }, [verifyTokenData, verifyTokenIsError, verifyTokenError, navigate, verifyTokenIsRefetching, verifyTokenIsLoading]);
 
   const navigationItemClickHandler = (index: number) => {
     if (openSubItem) {
@@ -200,11 +202,7 @@ export default function RootLayout() {
         verifyTokenData?.role && (
           <div>
             <Transition show={sidebarOpen} as={Fragment}>
-              <Dialog
-                as="div"
-                className="relative z-50 lg:hidden top-0 h-full w-full"
-                onClose={setSidebarOpen}
-              >
+              <Dialog as="div" className="relative z-50 lg:hidden top-0 h-full w-full" onClose={setSidebarOpen}>
                 <TransitionChild
                   as={Fragment}
                   enter="transition-opacity ease-linear duration-300"
@@ -239,16 +237,9 @@ export default function RootLayout() {
                         leaveTo="opacity-0"
                       >
                         <div className="absolute left-full top-0 flex w-16 justify-center pt-5">
-                          <button
-                            type="button"
-                            className="-m-2.5 p-2.5"
-                            onClick={() => setSidebarOpen(false)}
-                          >
+                          <button type="button" className="-m-2.5 p-2.5" onClick={() => setSidebarOpen(false)}>
                             <span className="sr-only">Close sidebar</span>
-                            <XIcon
-                              className="h-6 w-6 text-white"
-                              aria-hidden="true"
-                            />
+                            <XIcon className="h-6 w-6 text-white" aria-hidden="true" />
                           </button>
                         </div>
                       </TransitionChild>
@@ -258,10 +249,7 @@ export default function RootLayout() {
                           <LightLogo className="w-10 h-10" />
                         </div>
                         <nav className="flex flex-1 flex-col">
-                          <ul
-                            role="list"
-                            className="flex flex-1 flex-col gap-y-7"
-                          >
+                          <ul role="list" className="flex flex-1 flex-col gap-y-7">
                             <li>
                               <ul role="list" className="-mx-2 space-y-1">
                                 {navigation.map((item, index) => (
@@ -277,9 +265,7 @@ export default function RootLayout() {
                                             "group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold",
                                           );
                                         }}
-                                        onClick={() =>
-                                          navigationItemClickHandler(index)
-                                        }
+                                        onClick={() => navigationItemClickHandler(index)}
                                       >
                                         <item.icon aria-hidden="true" />
                                         {item.name}
@@ -313,12 +299,10 @@ export default function RootLayout() {
                               </ul>
                             </li>
                             <li>
-                              <div className="text-xs font-semibold leading-6 text-green-200">
-                                Your Members
-                              </div>
+                              <div className="text-xs font-semibold leading-6 text-green-200">Your Members</div>
                               <ul role="list" className="-mx-2 mt-2 space-y-1">
-                                {members.map((team) => (
-                                  <li key={team.name}>
+                                {members.map((team, index) => (
+                                  <li key={index}>
                                     <NavLink
                                       to={team.to}
                                       className={({ isActive }) =>
@@ -334,9 +318,7 @@ export default function RootLayout() {
                                       <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-green-400 bg-green-500 text-[0.625rem] font-medium text-white">
                                         {team.initial}
                                       </span>
-                                      <span className="truncate">
-                                        {team.name}
-                                      </span>
+                                      <span className="truncate">{team.name}</span>
                                     </NavLink>
                                   </li>
                                 ))}
@@ -366,9 +348,7 @@ export default function RootLayout() {
             {/* Static sidebar for desktop */}
             <div
               style={{ width: sidebarWidth }}
-              className={classNames(
-                `hidden lg:fixed lg:inset-y-0 lg:h-screen lg:z-50 lg:flex lg:flex-col`,
-              )}
+              className={classNames(`hidden lg:fixed lg:inset-y-0 lg:h-screen lg:z-50 lg:flex lg:flex-col`)}
             >
               {/* Sidebar component, swap this element with another sidebar if you like */}
               <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-primary px-6 pb-4">
@@ -392,9 +372,7 @@ export default function RootLayout() {
                                     "group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold",
                                   );
                                 }}
-                                onClick={() =>
-                                  navigationItemClickHandler(index)
-                                }
+                                onClick={() => navigationItemClickHandler(index)}
                               >
                                 <item.icon aria-hidden="true" />
                                 {item.name}
@@ -428,9 +406,7 @@ export default function RootLayout() {
                       </ul>
                     </li>
                     <li>
-                      <div className="text-xs font-semibold leading-6 text-green-200">
-                        Your Memebers
-                      </div>
+                      <div className="text-xs font-semibold leading-6 text-green-200">Your Memebers</div>
                       <ul role="list" className="-mx-2 mt-2 space-y-1">
                         {members.map((team) => (
                           <li key={team.name}>
@@ -473,11 +449,7 @@ export default function RootLayout() {
 
             <div className="lg:pl-72">
               <div
-                style={
-                  lgMatches
-                    ? { width: `calc(100% - ${sidebarWidth})` }
-                    : { width: "100%" }
-                }
+                style={lgMatches ? { width: `calc(100% - ${sidebarWidth})` } : { width: "100%" }}
                 className="fixed top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 bg-white px-4 sm:gap-x-6 sm:px-6 lg:px-8"
               >
                 <button
@@ -490,16 +462,12 @@ export default function RootLayout() {
                 </button>
 
                 {/* Separator */}
-                <div
-                  className="h-6 w-px bg-gray-900/10 lg:hidden"
-                  aria-hidden="true"
-                />
+                <div className="h-6 w-px bg-gray-900/10 lg:hidden" aria-hidden="true" />
 
                 <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
                   <div className="relative flex flex-1 items-center text-lg">
                     <p className="hidden lg:block">
-                      {`Welcome, `}{" "}
-                      <span className="font-semibold text-xl">{`${verifyTokenData.name}!`}</span>
+                      {`Welcome, `} <span className="font-semibold text-xl">{`${verifyTokenData.name}!`}</span>
                     </p>
                     {/* <label htmlFor="search-field" className="sr-only">
                       Search
@@ -517,10 +485,7 @@ export default function RootLayout() {
                     /> */}
                   </div>
                   <div className="flex items-center gap-x-4 lg:gap-x-6">
-                    <button
-                      type="button"
-                      className="-m-2.5 p-2.5 text-gray-400 hover:text-gray-500"
-                    >
+                    <button type="button" className="-m-2.5 p-2.5 text-gray-400 hover:text-gray-500">
                       <span className="sr-only">View notifications</span>
                       {/* <BellIcon className="h-6 w-6" aria-hidden="true" /> */}
                     </button>
@@ -537,30 +502,19 @@ export default function RootLayout() {
                         <div className="-m-1.5 flex items-center p-1.5 cursor-pointer">
                           <span className="sr-only">Open user menu</span>
                           <Avatar>
-                            <AvatarFallback>
-                              {getInitials(verifyTokenData.name || "JD")}
-                            </AvatarFallback>
+                            <AvatarFallback>{getInitials(verifyTokenData.name || "JD")}</AvatarFallback>
                           </Avatar>
                           <span className="hidden lg:flex lg:items-center">
-                            <span
-                              className="ml-4 text-sm font-semibold leading-6 text-gray-900"
-                              aria-hidden="true"
-                            >
+                            <span className="ml-4 text-sm font-semibold leading-6 text-gray-900" aria-hidden="true">
                               {verifyTokenData.name || "John Doe"}
                             </span>
-                            <ChevronDownIcon
-                              className="ml-2 h-5 w-5 text-gray-400"
-                              aria-hidden="true"
-                            />
+                            <ChevronDownIcon className="ml-2 h-5 w-5 text-gray-400" aria-hidden="true" />
                           </span>
                         </div>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-full">
-                        {userNavigation.map((item) => (
-                          <DropdownMenuItem
-                            className={"flex items-center gap-2"}
-                            onClick={item.handler}
-                          >
+                        {userNavigation.map((item, index) => (
+                          <DropdownMenuItem key={index} className={"flex items-center gap-2"} onClick={item.handler}>
                             <LogOutIcon className="text-red-500 w-4" />
                             <span>{item.name}</span>
                           </DropdownMenuItem>

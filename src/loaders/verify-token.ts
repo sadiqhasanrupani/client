@@ -12,5 +12,6 @@ export async function loader() {
   return queryClient.fetchQuery<any, any, any>({
     queryKey: ["verify-token", { navigate: "Something" }],
     queryFn: verifyToken,
+    retry: 2,
   });
 }
