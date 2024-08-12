@@ -77,44 +77,43 @@ export default function CreateClassroom() {
 
   const schema = yup.object().shape({
     classroomName: yup.string().required("Class name is required."),
-    startTime: yup
-      .string()
-      .required("Start time is required.")
-      .test("is-valid-time", "Start time must be before end time", function (startTime) {
-        const { endTime } = this.parent;
-        if (!endTime) return true;
-        return startTime < endTime;
-      }),
-    endTime: yup
-      .string()
-      .required("End time is required.")
-      .test("is-valid-time", "End time must be after start time", function (endTime) {
-        const { startTime } = this.parent;
-        if (!startTime) return true;
-        return endTime > startTime;
-      }),
     daysOfWeek: yup
       .array()
       .min(1, "You must select at least one day of the week.")
       .of(
         yup.object().shape({
-          day: yup.string().required(),
+          day: yup.string().required("Day is required."),
           showSeparateTimes: yup.boolean().required(),
-          startTime: yup.string().required(),
-          endTime: yup.string().required(),
-          wantSeparateTime: yup.boolean().required(),
+          startTime: yup
+            .string()
+            .required("Start time is required.")
+            .test("is-valid-time", "Start time must be before end time", function (startTime) {
+              const { endTime } = this.parent;
+              if (!endTime) return true;
+              return startTime < endTime;
+            }),
+          endTime: yup
+            .string()
+            .required("End time is required.")
+            .test("is-valid-time", "End time must be after start time", function (endTime) {
+              const { startTime } = this.parent;
+              if (!startTime) return true;
+              return endTime > startTime;
+            }),
+          wantSeparateTime: yup.boolean().required("This field is required."),
         }),
       )
-      .test("valid-time", "Start time must be before end time for all days", function (daysOfWeek) {
-        if (!daysOfWeek) return false;
+      .test("valid-time", "Start time must be before end time for all selected days", function (daysOfWeek) {
+        if (!daysOfWeek || daysOfWeek.length === 0) return false;
 
-        // Iterate over each dayOfWeek to validate startTime and endTime
         return daysOfWeek.every((day) => {
-          if (!day.startTime || !day.endTime) return true; // Skip validation if either is empty
-          return day.startTime < day.endTime;
+          if (day.showSeparateTimes) {
+            if (!day.startTime || !day.endTime) return true;
+            return day.startTime < day.endTime;
+          }
+          return true;
         });
-      })
-      .required("This field is required"),
+      }),
   });
 
   const formik = useFormik({
@@ -126,26 +125,23 @@ export default function CreateClassroom() {
   });
 
   function daysOfWeekCheckedHandler(checked: CheckedState, dayOfweek: DayOfWeek, index: number) {
-    // Create a new array with updated `showSeparateTimes` property
     const updatedDaysOfWeek = formik.values.daysOfWeek.map((d, i) => {
       if (d.day === dayOfweek.day && index === i) {
         return {
           ...d,
-          showSeparateTimes: checked, // set to true if checked, false otherwise
+          showSeparateTimes: checked,
         };
       }
       return d;
     });
 
     if (checked) {
-      // If checked, add the day if it's not already in the array
       if (!formik.values.daysOfWeek.some((d) => d.day === dayOfweek.day)) {
         formik.setFieldValue("daysOfWeek", [...formik.values.daysOfWeek, { ...dayOfweek, showSeparateTimes: true }]);
       } else {
         formik.setFieldValue("daysOfWeek", updatedDaysOfWeek);
       }
     } else {
-      // If unchecked, remove the day from the array
       formik.setFieldValue(
         "daysOfWeek",
         formik.values.daysOfWeek.filter((d) => d.day !== dayOfweek.day),
@@ -154,18 +150,16 @@ export default function CreateClassroom() {
   }
 
   function wantSeparateCheckedHandler(checked: CheckedState, dayOfWeek: DayOfWeek, index: number) {
-    // Create a new array with updated `wantSeparateTime` property
     const updatedDaysOfWeek = formik.values.daysOfWeek.map((d, i) => {
       if (d.day === dayOfWeek.day && index === i) {
         return {
           ...d,
-          wantSeparateTime: checked, // set to true if checked, false otherwise
+          wantSeparateTime: checked,
         };
       }
       return d;
     });
 
-    // Update the formik field value
     formik.setFieldValue("daysOfWeek", updatedDaysOfWeek);
   }
 
@@ -194,13 +188,13 @@ export default function CreateClassroom() {
     dayOfWeek: DayOfWeek,
     index: number,
   ) {
-    const newStartTime = event.target.value;
+    const newEndTime = event.target.value;
 
     const updatedDaysOfWeek = formik.values.daysOfWeek.map((d, i) => {
       if (d.day === dayOfWeek.day && index === i) {
         return {
           ...d,
-          endTime: newStartTime,
+          endTime: newEndTime,
         };
       }
       return d;
@@ -363,15 +357,18 @@ export default function CreateClassroom() {
                     </TooltipProvider>
                   </label>
 
-                  <div className="mt-4 grid grid-cols-1 gap-2">
+                  <div className="mt-4 grid grid-cols-1 gap-4">
                     {daysOfWeeks.map((dayOfWeek, index) => {
                       const currentDayOfWeek = formik.values.daysOfWeek.find((item) => item.day === dayOfWeek.day);
                       const wantSepareted =
                         currentDayOfWeek?.wantSeparateTime && currentDayOfWeek.day === dayOfWeek.day;
 
                       return (
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                          <div key={index} className="relative flex gap-x-3">
+                        <div
+                          key={index}
+                          className={`flex flex-col lg:flex-row lg:items-center ${wantSepareted ? "lg:gap-10 lg:justify-normal" : "lg:justify-between"}`}
+                        >
+                          <div className="relative flex gap-x-3">
                             <div className="flex h-6 items-center">
                               <Checkbox
                                 id={dayOfWeek.day}
@@ -389,9 +386,10 @@ export default function CreateClassroom() {
                             </div>
                           </div>
 
-                          {wantSepareted ? (
+                          {/* Conditionally render time inputs */}
+                          {wantSepareted && (
                             <>
-                              <div className="sm:col-span-3">
+                              <div className="w-full">
                                 <label
                                   htmlFor={`startTime${dayOfWeek.day}`}
                                   className="flex gap-2 items-center text-sm font-medium leading-6 text-gray-900"
@@ -404,18 +402,22 @@ export default function CreateClassroom() {
                                     type="time"
                                     name={`startTime${dayOfWeek.day}`}
                                     id={`startTime${dayOfWeek.day}`}
-                                    value={dayOfWeek.startTime}
+                                    value={formik.values.daysOfWeek[index].startTime || ""}
                                     onChange={(event) => dayOfWeekStartTimeChangeHandler(event, dayOfWeek, index)}
                                     onBlur={formik.handleBlur}
                                     className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                                   />
-                                  {formik.errors.startTime && formik.touched.startTime && (
-                                    <Label className="text-red-500">{formik.errors.startTime}</Label>
-                                  )}
+                                  {formik.errors.daysOfWeek &&
+                                    formik.touched.daysOfWeek &&
+                                    formik.errors.daysOfWeek[index] && (
+                                      <Label className="text-red-500">
+                                        {(formik.errors.daysOfWeek as any)[index]?.startTime}
+                                      </Label>
+                                    )}
                                 </div>
                               </div>
 
-                              <div className="sm:col-span-3">
+                              <div className="w-full">
                                 <label
                                   htmlFor={`endTime${dayOfWeek.day}`}
                                   className="flex gap-2 items-center text-sm font-medium leading-6 text-gray-900"
@@ -428,62 +430,68 @@ export default function CreateClassroom() {
                                     type="time"
                                     name={`endTime${dayOfWeek.day}`}
                                     id={`endTime${dayOfWeek.day}`}
-                                    value={dayOfWeek.endTime}
+                                    value={formik.values.daysOfWeek[index].endTime || ""}
                                     onChange={(event) => dayOfWeekEndTimeChangeHandler(event, dayOfWeek, index)}
                                     onBlur={formik.handleBlur}
                                     className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                                   />
-                                  {formik.errors.endTime && formik.touched.endTime && (
-                                    <Label className="text-red-500">{formik.errors.endTime}</Label>
-                                  )}
+                                  {formik.errors.daysOfWeek &&
+                                    formik.touched.daysOfWeek &&
+                                    formik.errors.daysOfWeek[index] && (
+                                      <Label className="text-red-500">
+                                        {(formik.errors.daysOfWeek as any)[index]?.endTime}
+                                      </Label>
+                                    )}
                                 </div>
                               </div>
                             </>
-                          ) : (
-                            ""
                           )}
 
-                          {/* Conditional rendering without using an IIFE */}
-                          {wantSepareted
-                            ? ""
-                            : formik.values.daysOfWeek.map((day, index) => {
-                                if (day.day === dayOfWeek.day && day.showSeparateTimes === true) {
+                          {/* Conditionally render separate time option */}
+                          {!wantSepareted
+                            ? formik.values.daysOfWeek.map((day, index) => {
+                                if (day.day === dayOfWeek.day && day.showSeparateTimes) {
                                   return (
                                     <div key={index} className="relative flex gap-x-3">
                                       <div className="flex h-6 items-center">
                                         <Checkbox
-                                          id={`separateTime-${dayOfWeek.day}`} // Use a unique id
+                                          id={`separateTime-${dayOfWeek.day}`}
                                           name="daysOfWeek"
                                           value={dayOfWeek.day}
                                           checked={
                                             formik.values.daysOfWeek.find((d) => d.day === dayOfWeek.day)
                                               ?.wantSeparateTime || false
-                                          } // Check if `wantSeparateTime` is true for this day
-                                          onCheckedChange={(checked) => {
-                                            wantSeparateCheckedHandler(checked, dayOfWeek, index);
-                                          }}
+                                          }
+                                          onCheckedChange={(checked) =>
+                                            wantSeparateCheckedHandler(checked, dayOfWeek, index)
+                                          }
                                           onBlur={() => formik.setFieldTouched("daysOfWeek", true)}
                                         />
                                       </div>
                                       <div className="text-sm leading-6">
-                                        <label htmlFor={dayOfWeek.day} className="capitalize font-medium text-gray-900">
-                                          {"Want a separate time?"}
+                                        <label
+                                          htmlFor={`separateTime-${dayOfWeek.day}`}
+                                          className="capitalize font-medium text-gray-900"
+                                        >
+                                          Want a separate time?
                                         </label>
                                       </div>
                                     </div>
                                   );
-                                } else {
-                                  return "";
                                 }
-                              })}
+                                return null;
+                              })
+                            : ""}
                         </div>
                       );
                     })}
                   </div>
                   <div>
-                    {formik.errors.daysOfWeek && formik.touched.daysOfWeek && (
-                      <Label className="text-red-500">{formik.errors.daysOfWeek as any}</Label>
-                    )}
+                    {formik.errors.daysOfWeek &&
+                      formik.touched.daysOfWeek &&
+                      typeof formik.errors.daysOfWeek === "string" && (
+                        <Label className="text-red-500">{formik.errors.daysOfWeek}</Label>
+                      )}
                   </div>
                 </div>
               </div>
