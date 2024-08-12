@@ -4,21 +4,20 @@ export enum RoleEnum {
   principle = "principle",
 }
 
-export type DayOfWeek =
-  | "monday"
-  | "tuesday"
-  | "wednesday"
-  | "thrusday"
-  | "friday"
-  | "saturday"
-  | "sunday";
+export type DayOfWeekEnum = "monday" | "tuesday" | "wednesday" | "friday" | "Thurssday" | "saturday" | "sunday";
 
-export type CreateClassroomContext = {
-  classroomName: string;
-  classroomDescription?: string;
+export type ClassroomSession = {
+  dayOfWeek: DayOfWeekEnum;
   startTime: string;
   endTime: string;
-  daysOfWeek: DayOfWeek[];
+};
+
+export type CreateClassroomContext = {
+  name: string;
+  classroomDescription: string;
+  description?: string;
+  daysOfWeek: ClassroomSession[];
+  teacherId?: number;
 };
 
 // http body context types
@@ -121,4 +120,9 @@ export type VerifyTokenPayload = {
   message: string;
   role: RoleEnum;
   name: string;
+};
+
+export type UnassignedTeachersPayload = {
+  message: string;
+  unassignedTeachers: { id: number; name: string; email: string }[];
 };

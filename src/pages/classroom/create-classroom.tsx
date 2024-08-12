@@ -11,6 +11,25 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { CheckedState } from "@radix-ui/react-checkbox";
+import React, { useEffect, useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { getAllUnassignedTeachers } from "@/http/get";
+import { HttpError } from "@/lib/utils";
+import { ClassroomSession, CreateClassroomContext, DayOfWeekEnum, UnassignedTeachersPayload } from "@/types";
+import { toast } from "sonner";
+import { AppUseSelector } from "@/store";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { createClassroomHandler } from "@/http/post";
+import Spinner from "@/components/loaders/spinner";
 
 /**
 Subjects
@@ -31,10 +50,79 @@ Description: Brief description of the subject.
 */
 
 export default function CreateClassroom() {
+  const role = AppUseSelector((state) => state.userDetail.role);
+
   const navigate = useNavigate();
+  const [schema, setSchema] = useState(
+    yup.object().shape({
+      classroomName: yup.string().required("Class name is required."),
+      startTime: yup
+        .string()
+        .required("Start time is required.")
+        .test("is-valid-time", "Start time must be before end time", function (startTime) {
+          const { endTime } = this.parent;
+          if (!endTime) return true;
+          return startTime < endTime;
+        }),
+      endTime: yup
+        .string()
+        .required("End time is required.")
+        .test("is-valid-time", "End time must be after start time", function (endTime) {
+          const { startTime } = this.parent;
+          if (!startTime) return true;
+          return endTime > startTime;
+        }),
+      daysOfWeek: yup
+        .array()
+        .min(1, "You must select at least one day of the week.")
+        .of(
+          yup.object().shape({
+            day: yup.string().required("Day is required."),
+            showSeparateTimes: yup.boolean().required(),
+            wantSeparateTime: yup.boolean().required("This field is required."),
+          }),
+        ),
+    }),
+  );
+
+  const {
+    data: unassignedTeachersData,
+    isLoading: unassignedTeachersIsLoading,
+    isRefetching: unassignedTeachersIsRefetching,
+    isError: unassignedTeachersIsError,
+    error: unassignedTeachersError,
+  } = useQuery<UnassignedTeachersPayload, HttpError>({
+    queryKey: ["get-all-unassigned-teachers"],
+    queryFn: getAllUnassignedTeachers,
+    enabled: role === "principle",
+    staleTime: Infinity,
+    gcTime: 0,
+  });
+
+  React.useEffect(() => {
+    if (unassignedTeachersIsError) {
+      toast.error(unassignedTeachersError.code, {
+        description: unassignedTeachersError.message,
+      });
+    }
+  }, [unassignedTeachersIsError, unassignedTeachersError]);
+
+  const {
+    isPending: createClassroomIsPending,
+    isError: createClassroomIsError,
+    error: createClassroomError,
+    mutate: createClassroomMutate,
+  } = useMutation<any, HttpError, CreateClassroomContext>({
+    mutationFn: createClassroomHandler,
+    mutationKey: ["create-classroom"],
+
+    onSuccess(data) {
+      toast.success(data.message);
+    },
+  });
 
   type DayOfWeek = {
-    day: string;
+    day: DayOfWeekEnum;
     showSeparateTimes: boolean;
     startTime: string;
     endTime: string;
@@ -53,7 +141,7 @@ export default function CreateClassroom() {
     { day: "monday", showSeparateTimes: false, startTime: "", endTime: "", wantSeparateTime: false },
     { day: "tuesday", showSeparateTimes: false, startTime: "", endTime: "", wantSeparateTime: false },
     { day: "wednesday", showSeparateTimes: false, startTime: "", endTime: "", wantSeparateTime: false },
-    { day: "thursday", showSeparateTimes: false, startTime: "", endTime: "", wantSeparateTime: false },
+    { day: "Thurssday", showSeparateTimes: false, startTime: "", endTime: "", wantSeparateTime: false },
     { day: "friday", showSeparateTimes: false, startTime: "", endTime: "", wantSeparateTime: false },
     { day: "saturday", showSeparateTimes: false, startTime: "", endTime: "", wantSeparateTime: false },
     { day: "sunday", showSeparateTimes: false, startTime: "", endTime: "", wantSeparateTime: false },
@@ -65,6 +153,7 @@ export default function CreateClassroom() {
     endTime: string;
     daysOfWeek: DaysOfWeek;
     classroomDescription: string;
+    teacherId?: number;
   };
 
   const initialValues: InitialValues = {
@@ -75,15 +164,37 @@ export default function CreateClassroom() {
     daysOfWeek: [],
   };
 
-  const schema = yup.object().shape({
-    classroomName: yup.string().required("Class name is required."),
-    daysOfWeek: yup
-      .array()
-      .min(1, "You must select at least one day of the week.")
-      .of(
+  const formik = useFormik({
+    initialValues,
+    validationSchema: schema,
+    onSubmit(values) {
+      // Transform the daysOfWeek array based on the provided logic
+      const result: CreateClassroomContext = {
+        name: values.classroomName,
+        daysOfWeek: values.daysOfWeek.map((day) => {
+          // Determine if the current day has separate times
+          const dayData = values.daysOfWeek.find((d) => d.day === day.day);
+
+          // Return the appropriate object based on whether separate times are used
+          return {
+            dayOfWeek: day.day,
+            startTime: dayData && dayData.wantSeparateTime ? dayData.startTime : values.startTime,
+            endTime: dayData && dayData.wantSeparateTime ? dayData.endTime : values.endTime,
+          };
+        }) as ClassroomSession[],
+        classroomDescription: values.classroomDescription,
+        teacherId: values.teacherId,
+      };
+
+      createClassroomMutate(result);
+    },
+  });
+
+  useEffect(() => {
+    if (formik.values.daysOfWeek.some((value) => value.wantSeparateTime)) {
+      setSchema(
         yup.object().shape({
-          day: yup.string().required("Day is required."),
-          showSeparateTimes: yup.boolean().required(),
+          classroomName: yup.string().required("Class name is required."),
           startTime: yup
             .string()
             .required("Start time is required.")
@@ -100,29 +211,64 @@ export default function CreateClassroom() {
               if (!startTime) return true;
               return endTime > startTime;
             }),
-          wantSeparateTime: yup.boolean().required("This field is required."),
+          daysOfWeek: yup
+            .array()
+            .min(1, "You must select at least one day of the week.")
+            .of(
+              yup.object().shape({
+                day: yup.string().required("Day is required."),
+                showSeparateTimes: yup.boolean().required(),
+                startTime: yup
+                  .string()
+                  .required("Start time is required.")
+                  .test("is-valid-time", "Start time must be before end time", function (startTime) {
+                    const { endTime } = this.parent;
+                    if (!endTime) return true;
+                    return startTime < endTime;
+                  }),
+                endTime: yup
+                  .string()
+                  .required("End time is required.")
+                  .test("is-valid-time", "End time must be after start time", function (endTime) {
+                    const { startTime } = this.parent;
+                    if (!startTime) return true;
+                    return endTime > startTime;
+                  }),
+                wantSeparateTime: yup.boolean().required("This field is required."),
+              }),
+            )
+            .test("valid-time", "Start time must be before end time for all selected days", function (daysOfWeek) {
+              if (!daysOfWeek || daysOfWeek.length === 0) return false;
+
+              return daysOfWeek.every((day) => {
+                if (day.showSeparateTimes) {
+                  if (!day.startTime || !day.endTime) return true;
+                  return day.startTime < day.endTime;
+                }
+                return true;
+              });
+            }),
         }),
-      )
-      .test("valid-time", "Start time must be before end time for all selected days", function (daysOfWeek) {
-        if (!daysOfWeek || daysOfWeek.length === 0) return false;
+      );
+    }
+  }, [formik.values.daysOfWeek]);
 
-        return daysOfWeek.every((day) => {
-          if (day.showSeparateTimes) {
-            if (!day.startTime || !day.endTime) return true;
-            return day.startTime < day.endTime;
-          }
-          return true;
-        });
-      }),
-  });
+  React.useEffect(() => {
+    if (createClassroomIsError) {
+      toast.error(createClassroomError.code, {
+        description: createClassroomError.message,
+        position: "top-center",
+      });
 
-  const formik = useFormik({
-    initialValues,
-    validationSchema: schema,
-    onSubmit(values) {
-      console.log(values);
-    },
-  });
+      if (createClassroomError.code === 422) {
+        for (const error of createClassroomError.info.errorStack) {
+          formik.setFieldError(error.path, error.msg);
+        }
+      }
+    }
+
+    // eslint-disable-next-line
+  }, [createClassroomIsError, createClassroomError]);
 
   function daysOfWeekCheckedHandler(checked: CheckedState, dayOfweek: DayOfWeek, index: number) {
     const updatedDaysOfWeek = formik.values.daysOfWeek.map((d, i) => {
@@ -205,7 +351,7 @@ export default function CreateClassroom() {
 
   return (
     <div className="space-y-10 divide-y divide-gray-900/10">
-      <form>
+      <form onSubmit={formik.handleSubmit}>
         <div className="grid grid-cols-1 gap-x-8 gap-y-8 pt-10 md:grid-cols-3">
           <div className="px-4 sm:px-0">
             <h2 className="text-base font-semibold leading-7 text-gray-900">Classroom Detail</h2>
@@ -218,7 +364,7 @@ export default function CreateClassroom() {
           <Card className="bg-white sm:rounded-xl md:col-span-2">
             <div className="px-4 py-6 sm:p-8">
               <div className="grid max-w-2xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-                <div className="sm:col-span-4">
+                <div className="sm:col-span-3">
                   <label htmlFor="classroomName" className="block text-sm font-medium leading-6 text-gray-900">
                     Class Name
                   </label>
@@ -236,6 +382,47 @@ export default function CreateClassroom() {
                     )}
                   </div>
                 </div>
+
+                {unassignedTeachersIsLoading || unassignedTeachersIsRefetching ? (
+                  <div className="flex flex-col gap-4 sm:col-span-3">
+                    <Skeleton className="w-100 h-4" />
+                    <Skeleton className="w-100 h-[2.25rem]" />
+                  </div>
+                ) : (
+                  role === "principle" && (
+                    <div className="sm:col-span-3">
+                      <label htmlFor="classroom" className="block text-sm font-medium leading-6 text-gray-900">
+                        Avaliable Teachers
+                      </label>
+                      <div className="mt-2">
+                        <Select
+                          onOpenChange={() => formik.setFieldTouched("classId", true)}
+                          onValueChange={(value) => {
+                            formik.setFieldValue("teacherId", parseInt(value));
+                          }}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Assign a Teacher" />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-[10rem] overflow-y-auto">
+                            <SelectGroup>
+                              <SelectLabel>Teachers</SelectLabel>
+                              {unassignedTeachersData?.unassignedTeachers?.length === 0 ? (
+                                <p className="text-sm text-center p-4 text-red-600"> no result </p>
+                              ) : (
+                                unassignedTeachersData?.unassignedTeachers?.map((teacher, index) => (
+                                  <SelectItem key={index} value={teacher.id.toString()}>
+                                    {teacher.name}
+                                  </SelectItem>
+                                ))
+                              )}
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  )
+                )}
 
                 <div className="col-span-full">
                   <label htmlFor="classroomDescription" className="block text-sm font-medium leading-6 text-gray-900">
@@ -381,7 +568,7 @@ export default function CreateClassroom() {
                             </div>
                             <div className="text-sm leading-6">
                               <label htmlFor={dayOfWeek.day} className="capitalize font-medium text-gray-900">
-                                {dayOfWeek.day}
+                                {dayOfWeek.day === "Thurssday" ? "thursday" : dayOfWeek.day}
                               </label>
                             </div>
                           </div>
@@ -395,14 +582,15 @@ export default function CreateClassroom() {
                                   className="flex gap-2 items-center text-sm font-medium leading-6 text-gray-900"
                                 >
                                   <span>Start Time</span>
-                                  <BadgeInfo className="w-4 text-slate-500" />
                                 </label>
                                 <div className="mt-2">
                                   <Input
                                     type="time"
                                     name={`startTime${dayOfWeek.day}`}
                                     id={`startTime${dayOfWeek.day}`}
-                                    value={formik.values.daysOfWeek[index].startTime || ""}
+                                    value={
+                                      formik.values.daysOfWeek[index] ? formik.values.daysOfWeek[index].startTime : ""
+                                    }
                                     onChange={(event) => dayOfWeekStartTimeChangeHandler(event, dayOfWeek, index)}
                                     onBlur={formik.handleBlur}
                                     className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -423,14 +611,15 @@ export default function CreateClassroom() {
                                   className="flex gap-2 items-center text-sm font-medium leading-6 text-gray-900"
                                 >
                                   <span>End Time</span>
-                                  <BadgeInfo className="w-4 text-slate-500" />
                                 </label>
                                 <div className="mt-2">
                                   <Input
                                     type="time"
                                     name={`endTime${dayOfWeek.day}`}
                                     id={`endTime${dayOfWeek.day}`}
-                                    value={formik.values.daysOfWeek[index].endTime || ""}
+                                    value={
+                                      formik.values.daysOfWeek[index] ? formik.values.daysOfWeek[index].endTime : ""
+                                    }
                                     onChange={(event) => dayOfWeekEndTimeChangeHandler(event, dayOfWeek, index)}
                                     onBlur={formik.handleBlur}
                                     className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -500,8 +689,9 @@ export default function CreateClassroom() {
               <Button onClick={() => navigate(-1)} type="button" variant={"ghost"}>
                 Cancel
               </Button>
-              <Button disabled={!formik.isValid || !formik.dirty} type="submit">
-                Save
+              <Button disabled={!formik.isValid || !formik.dirty} type="submit" className="flex gap-2 items-center">
+                {createClassroomIsPending ? <Spinner /> : ""}
+                <span>Create</span>
               </Button>
             </div>
           </Card>

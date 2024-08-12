@@ -27,3 +27,7 @@ export async function getAllStudentsHandler() {
 export async function getStudentHandler(userId: number) {
   return getRequest(`/student/get/${userId}`);
 }
+
+export async function getAllUnassignedTeachers() {
+  return getRequest(`/teacher/get-all-unassigned`);
+}

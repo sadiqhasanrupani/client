@@ -1,5 +1,6 @@
 import { HttpError, postRequest } from "@/lib/utils";
 import {
+  CreateClassroomContext,
   LoginContext,
   RegisterContext,
   StudentRegistrationContext,
@@ -8,16 +9,13 @@ import {
 
 export async function registerHandler(registerContext: RegisterContext) {
   // return postRequest("/auth/register", { ...registerContext }, false);
-  const response = await fetch(
-    `${import.meta.env.VITE_API_URL}/auth/register`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(registerContext),
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/register`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
     },
-  );
+    body: JSON.stringify(registerContext),
+  });
 
   if (!response.ok) {
     const errorData = await response.json();
@@ -50,14 +48,14 @@ export async function loginHandler(loginContext: LoginContext) {
   return await response.json();
 }
 
-export async function teacherRegistrationHandler(
-  teacherRegistrationContext: TeacherRegistrationContext,
-) {
+export async function teacherRegistrationHandler(teacherRegistrationContext: TeacherRegistrationContext) {
   return postRequest("/teacher/create", teacherRegistrationContext);
 }
 
-export async function studentRegistrationHandler(
-  studentRegistrationContext: StudentRegistrationContext,
-) {
+export async function studentRegistrationHandler(studentRegistrationContext: StudentRegistrationContext) {
   return postRequest("/student/create", studentRegistrationContext);
+}
+
+export async function createClassroomHandler(createClassroom: CreateClassroomContext) {
+  return postRequest("/classroom/create", createClassroom);
 }
