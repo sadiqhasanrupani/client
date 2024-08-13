@@ -32,7 +32,7 @@ import { createClassroomHandler } from "@/http/post";
 import Spinner from "@/components/loaders/spinner";
 
 /**
-Subjects
+TODO: Subjects
 Subject Name:
 Field Type: Text
 Placeholder: "Enter subject name"
@@ -118,6 +118,7 @@ export default function CreateClassroom() {
 
     onSuccess(data) {
       toast.success(data.message);
+      navigate(-1)
     },
   });
 

@@ -3,11 +3,15 @@ import { createSlice } from "@reduxjs/toolkit";
 export type updateDrawerState = {
   userId: number;
   open: boolean;
+  classId: number;
+  editClassOpen: boolean;
 };
 
 const initialState: updateDrawerState = {
   userId: -1,
   open: false,
+  classId: -1,
+  editClassOpen: false,
 };
 
 const updateDrawerSlice = createSlice({
@@ -20,6 +24,10 @@ const updateDrawerSlice = createSlice({
     },
     toggleDrawer(state, action) {
       state.open = action.payload;
+    },
+    classroomDrawerHandler(state, action) {
+      state.classId = action.payload.classId;
+      state.editClassOpen = action.payload.editClassOpen;
     },
   },
 });
