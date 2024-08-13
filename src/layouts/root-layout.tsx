@@ -10,9 +10,7 @@ import {
   XIcon,
   ChevronDownIcon,
   BadgePlus,
-  UserRoundCog,
   CalendarCog,
-  Dot,
   Menu,
   LogOutIcon,
 } from "lucide-react";
