@@ -126,3 +126,23 @@ export type UnassignedTeachersPayload = {
   message: string;
   unassignedTeachers: { id: number; name: string; email: string }[];
 };
+
+export type Classroom = {
+  id: number;
+  name: string;
+  assignedTeacher: string | null;
+  assignedTeacherId: number | null;
+  days: {
+    day: string;
+    startTime: string;
+    endTime: string;
+  }[];
+  startTime: string;
+  endTime: string;
+  students: 0;
+};
+
+export type GetClassroomsPayload = {
+  message: string;
+  classrooms: Classroom[];
+};

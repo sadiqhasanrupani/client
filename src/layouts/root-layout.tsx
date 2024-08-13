@@ -71,6 +71,7 @@ export default function RootLayout() {
   useEffect(() => {
     if (verifyTokenIsError) {
       if (verifyTokenError?.code === 401) {
+        Cookies.remove("authToken");
         navigate("/login");
       } else {
         toast.error(verifyTokenError.message);
@@ -105,23 +106,6 @@ export default function RootLayout() {
           ];
           navigationLists = [
             { name: "Dashboard", to: "/", icon: HomeIcon },
-            {
-              name: "Manage Users",
-              to: "/manage-users",
-              icon: UserRoundCog,
-              children: [
-                {
-                  name: "Teachers",
-                  to: "/manage-users/teachers",
-                  icon: Dot,
-                },
-                {
-                  name: "Students",
-                  to: "/manage-users/students",
-                  icon: Dot,
-                },
-              ],
-            },
             { name: "Timetable", to: "/timetables", icon: CalendarCog },
             { name: "Manage Classrooms", to: "/classrooms", icon: BadgePlus },
             // {

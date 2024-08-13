@@ -11,8 +11,8 @@ import Login from "@/pages/auth/login";
 import Register from "@/pages/auth/register";
 
 // manage users pages
-import ManageTeachers from "@/pages/manage-users/manage-teachers";
-import ManageStudents from "@/pages/manage-users/manage-students";
+// import ManageTeachers from "@/pages/manage-users/manage-teachers";
+// import ManageStudents from "@/pages/manage-users/manage-students";
 
 // table pages
 import Timetables from "@/pages/timetables/timetables";
@@ -34,14 +34,14 @@ export function Routes() {
       errorElement: <Error404 />,
       children: [
         { index: true, element: "Home" },
-        {
-          path: "manage-users",
-          children: [
-            { index: true, element: "" },
-            { path: "teachers", element: <ManageTeachers /> },
-            { path: "students", element: <ManageStudents /> },
-          ],
-        },
+        // {
+        //   path: "manage-users",
+        //   children: [
+        //     { index: true, element: "" },
+        //     { path: "teachers", element: <ManageTeachers /> },
+        //     { path: "students", element: <ManageStudents /> },
+        //   ],
+        // },
         {
           path: "timetables",
           children: [

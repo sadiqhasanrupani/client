@@ -31,3 +31,7 @@ export async function getStudentHandler(userId: number) {
 export async function getAllUnassignedTeachers() {
   return getRequest(`/teacher/get-all-unassigned`);
 }
+
+export async function getAllClassroomsHandler() {
+  return getRequest("/classroom/get-all");
+}
