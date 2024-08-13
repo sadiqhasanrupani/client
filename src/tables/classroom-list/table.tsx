@@ -8,20 +8,19 @@ import { toast } from "sonner";
 import Spinner from "@/components/loaders/spinner";
 import { columns } from "./column";
 import { DataTable } from "./data-table";
+import RefreshButton from "@/components/button/refresh-button";
 
 export default function ClassroomList() {
   const {
     data: classroomsData,
     isLoading: classroomsIsLoading,
-    // isRefetching: classroomsIsRefetching,
+    isRefetching: classroomsIsRefetching,
     isError: classroomsIsError,
     error: classroomsError,
-    // refetch: classroomsRefetch,
+    refetch: classroomsRefetch,
   } = useQuery<GetClassroomsPayload, HttpError>({
     queryKey: ["get-all-classrooms"],
     queryFn: getAllClassroomsHandler,
-    gcTime: 0,
-    staleTime: Infinity,
   });
 
   React.useEffect(() => {
@@ -32,12 +31,13 @@ export default function ClassroomList() {
     }
   }, [classroomsIsError, classroomsError]);
 
-  console.log(classroomsData);
-
   return (
-    <div>
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-end w-full">
+        <RefreshButton isRefetching={classroomsIsRefetching} refetch={classroomsRefetch} />
+      </div>
       {classroomsIsLoading ? (
-        <div className="w-full h-screen flex justify-center items-center">
+        <div className="w-full h-32 flex justify-center items-center">
           <Spinner />
         </div>
       ) : (

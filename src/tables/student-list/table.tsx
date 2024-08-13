@@ -8,9 +8,7 @@ import { GetAllStudentPayload } from "@/types";
 import { DataTable } from "./data-table";
 import { columns } from "./column";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
-import Spinner from "@/components/loaders/spinner";
+import RefreshButton from "@/components/button/refresh-button";
 
 export default function StudentTable() {
   const {
@@ -33,30 +31,15 @@ export default function StudentTable() {
 
   return (
     <>
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <h1>Student Lists</h1>
-          <Button
-            variant={"outline"}
-            className="flex gap-1 items-center"
-            onClick={() => getStudentRefetch()}
-          >
-            {getStudentsIsRefetching ? (
-              <Spinner />
-            ) : (
-              <RefreshCw className="w-4" />
-            )}
-            <span>Refresh</span>{" "}
-          </Button>
+      <Card className="p-4">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <h1>Student Lists</h1>
+            <RefreshButton isRefetching={getStudentsIsRefetching} refetch={getStudentRefetch} />
+          </div>
+          {getStudentsIsLoading ? "loading..." : <DataTable columns={columns} data={getStudentsData?.users || []} />}
         </div>
-        {getStudentsIsLoading ? (
-          "loading..."
-        ) : (
-          <Card className="border-none ">
-            <DataTable columns={columns} data={getStudentsData?.users || []} />
-          </Card>
-        )}
-      </div>
+      </Card>
     </>
   );
 }

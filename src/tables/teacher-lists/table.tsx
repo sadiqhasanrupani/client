@@ -8,9 +8,7 @@ import { GetAllTeacherPayload } from "@/types";
 import { DataTable } from "./data-table";
 import { columns } from "./column";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
-import Spinner from "@/components/loaders/spinner";
+import RefreshButton from "@/components/button/refresh-button";
 
 export default function TeacherTable() {
   const {
@@ -37,10 +35,7 @@ export default function TeacherTable() {
         <Card className="p-4 flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <h1>Teacher Lists</h1>
-            <Button variant={"outline"} className="flex gap-1 items-center" onClick={() => getTeacherRefetch()}>
-              {getTeacherIsRefetching ? <Spinner /> : <RefreshCw className="w-4" />}
-              <span>Refresh</span>{" "}
-            </Button>
+            <RefreshButton isRefetching={getTeacherIsRefetching} refetch={getTeacherRefetch} />
           </div>
           {getTeachersIsLoading ? (
             "loading..."
